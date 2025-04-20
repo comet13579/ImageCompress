@@ -43,12 +43,14 @@ class ImageCompressor:
         # Open all parent folders after compression
         if self.openfolder:
             for folder in self.output_folder:
+                abs_folder = os.path.abspath(folder)
+                print(f"Opening folder: {abs_folder}")
                 if sys.platform.startswith('darwin'):  # macOS
-                    os.system(f"open {folder}")
+                    os.system(f"open '{abs_folder}'")
                 elif sys.platform.startswith('win'):  # Windows
-                    os.system(f"start {folder}")
+                    os.system(f'explorer "{abs_folder}"')  # Use double quotes for Windows
                 elif sys.platform.startswith('linux'):  # Linux
-                    os.system(f"xdg-open {folder}")
+                    os.system(f"xdg-open '{abs_folder}'")
 
         return time.time() - inittime
 
