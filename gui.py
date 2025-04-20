@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QSlider,QPushButton, QLabel, QFileDialog, QHBoxLayout, QComboBox, QTextEdit)
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QSlider,QPushButton, QLabel, QFileDialog, QHBoxLayout, QTextEdit, QCheckBox)
 from PyQt5.QtCore import Qt
 import sys
 import os
@@ -9,6 +9,7 @@ class CompressorGUI(QMainWindow):
         super().__init__()
         self.setWindowTitle("Image Compressor")
         self.setGeometry(100, 100, 500, 400)
+        self.setMaximumSize(800, 640) 
         self.selected_files = []
         
         # Create central widget and layout
@@ -47,6 +48,9 @@ class CompressorGUI(QMainWindow):
         self.remove_btn = QPushButton("Remove All")
         self.remove_btn.clicked.connect(self.remove_files)
         button_layout.addWidget(self.remove_btn)
+
+        self.openfolder_check = QCheckBox("Open folder of images")
+        button_layout.addWidget(self.openfolder_check)
         
 
         #Create horizontal layout for quality slider and file format
@@ -118,7 +122,7 @@ class CompressorGUI(QMainWindow):
         quality = self.quality_slider.value()
         if quality == 0:
             quality = 1
-        compressor = ImageCompressor(self.selected_files, quality)
+        compressor = ImageCompressor(self.selected_files, quality, self.openfolder_check.isChecked())
         try:
             time = compressor.compress()
             self.status_label.setText(f"Compression completed successfully! ({round(time,2)} seconds)".format(time))
