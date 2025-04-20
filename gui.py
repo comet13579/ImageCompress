@@ -8,7 +8,7 @@ class CompressorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Image Compressor")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 500, 400)
         self.selected_files = []
         
         # Create central widget and layout
@@ -42,11 +42,6 @@ class CompressorGUI(QMainWindow):
         self.select_btn = QPushButton("Select Images")
         self.select_btn.clicked.connect(self.select_files)
         button_layout.addWidget(self.select_btn)
-        
-        # Create select folder button
-        self.folder_btn = QPushButton("Select Folder")
-        self.folder_btn.clicked.connect(self.select_folder)
-        button_layout.addWidget(self.folder_btn)
 
         # Create remove all files button
         self.remove_btn = QPushButton("Remove All")
@@ -67,10 +62,8 @@ class CompressorGUI(QMainWindow):
         h_layout2.addLayout(self.formatbox)
 
         # Create format selection combo box
-        self.format_combo = QComboBox()
-        self.format_combo.addItems(["JPEG"])
         self.formatbox.addWidget(QLabel("Output Format:"))
-        self.formatbox.addWidget(self.format_combo)
+        self.formatbox.addWidget(QLabel("JPG"))
 
         # Create quality slider
         quality_label = QLabel("Compression Quality:")
@@ -83,7 +76,7 @@ class CompressorGUI(QMainWindow):
         self.quality_slider.setMaximum(95)
         self.quality_slider.setValue(init_quality)
         self.quality_slider.setTickPosition(QSlider.TicksBelow)
-        self.quality_slider.setTickInterval(10)
+        self.quality_slider.setTickInterval(5)
 
         self.quality_value = QLabel(f"Quality value (arbitary, not percentage): {init_quality}")
         self.quality_slider.valueChanged.connect(self.update_quality_label)
@@ -125,23 +118,12 @@ class CompressorGUI(QMainWindow):
         quality = self.quality_slider.value()
         if quality == 0:
             quality = 1
-        compressor = ImageCompressor(self.selected_files, quality, self.format_combo.currentText())
+        compressor = ImageCompressor(self.selected_files, quality)
         try:
-            compressor.compress()
-            self.status_label.setText("Compression completed successfully!")
+            time = compressor.compress()
+            self.status_label.setText(f"Compression completed successfully! ({round(time,2)} seconds)".format(time))
         except Exception as e:
             self.status_label.setText(f"Error during compression: {str(e)}")
-
-    def select_folder(self):
-        pass
-        # bugs detected, button not used yet
-        #folder = QFileDialog.getExistingDirectory(self, "Select Folder")
-        #    image_files = []
-        #    for file in os.listdir(folder):
-        #        if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.gif')):
-        #            image_files.append(os.path.join(folder, file))
-        #
-        #     self.files_text.setText("\n".join(image_files))
 
 def main():
     app = QApplication(sys.argv)

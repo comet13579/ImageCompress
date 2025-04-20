@@ -1,33 +1,46 @@
 from PIL import Image
+import threading
+import time
 import sys
 import os
 
 class ImageCompressor:
-    def __init__(self, image_paths, quality, format):
+    def __init__(self, image_paths, quality):
         self.image_paths = image_paths
         self.quality = quality
-        self.format = format
-        self.output_path = []
+        self.output_paths = []
         self._generate_output_path()
     
     def _generate_output_path(self):
         for image_path in self.image_paths:
             file_name, originalext= os.path.splitext(image_path)
-            print(f"{file_name}_compressed.{self.format}")
-            self.output_path.append(f"{file_name}_compressed{self.quality}.{self.format}")
+            print(f"{file_name}_compressed.")
+            self.output_paths.append(f"{file_name}_compressed{self.quality}.jpg")
     
-    def compress(self):
-        for i in range(len(self.image_paths)):
-            with Image.open(self.image_paths[i]) as img:
-                img.save(self.output_path[i], self.format,quality=self.quality)
-            print(f"Compressed image saved as: {self.output_path[i]} to {os.path.getsize(self.output_path[i]) // 1000} KB")
+    def compress_single(self, image_path, output_path):
+        with Image.open(image_path) as img:
+            img = img.convert('RGB')
+            img.save(output_path, "JPEG", quality=self.quality)
+        print(f"Compressed image saved as: {output_path} to {os.path.getsize(output_path) // 1024} KB")
 
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python main.py <image_path> <quality_percentage>")
-        sys.exit(1)
-    
-    compressor = ImageCompressor(["DSC05951.png","DSC05952.png","WhatsApp Image 2021-05-24 at 16.22.29.jpeg"], int(sys.argv[2]),"PNG")
+    def compress(self):
+        inittime = time.time()
+        threads = []
+        for i in range(len(self.image_paths)):
+            thread = threading.Thread(
+                target=self.compress_single,
+                args=(self.image_paths[i], self.output_paths[i])
+            )
+            threads.append(thread)
+            thread.start()
+
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join()
+        return time.time() - inittime
+
+if __name__ == "__main__":  
+    compressor = ImageCompressor(["14.5k.png"], 10)
     compressor.compress()
 
 
