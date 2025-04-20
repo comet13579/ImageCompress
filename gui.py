@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QSlider,QPushButton, QLabel, QFileDialog, QHBoxLayout, QTextEdit, QCheckBox)
 from PyQt5.QtCore import Qt
 import sys
-import os
 from ImageCompressor import ImageCompressor
 
 class CompressorGUI(QMainWindow):
