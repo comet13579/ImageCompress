@@ -1,5 +1,15 @@
 *.JPG
 *.jpg
 *.png
+*.jpeg
+*.bmp
+*.tiff
+*.gif
 __pycache__/
 venv/
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db

@@ -1,7 +1,26 @@
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QSlider,QPushButton, QLabel, QFileDialog, QHBoxLayout, QTextEdit, QCheckBox)
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QSlider,QPushButton, QLabel, QFileDialog, QHBoxLayout, QTextEdit, QCheckBox, QComboBox, QProgressBar)
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 import sys
 from ImageCompressor import ImageCompressor
+
+class CompressorThread(QThread):
+    progress = pyqtSignal(int)
+    error = pyqtSignal(str)
+    finished = pyqtSignal()
+
+    def __init__(self, compressor):
+        super().__init__()
+        self.compressor = compressor
+
+    def run(self):
+        try:
+            time = self.compressor.compress(self.update_progress)
+            self.finished.emit()
+        except Exception as e:
+            self.error.emit(str(e))
+
+    def update_progress(self, value):
+        self.progress.emit(value)
 
 class CompressorGUI(QMainWindow):
     def __init__(self):
@@ -66,7 +85,9 @@ class CompressorGUI(QMainWindow):
 
         # Create format selection combo box
         self.formatbox.addWidget(QLabel("Output Format:"))
-        self.formatbox.addWidget(QLabel("JPG"))
+        self.format_combo = QComboBox()
+        self.format_combo.addItems(["JPG", "PNG", "BMP"])
+        self.formatbox.addWidget(self.format_combo)
 
         # Create quality slider
         quality_label = QLabel("Compression Quality:")
@@ -95,6 +116,10 @@ class CompressorGUI(QMainWindow):
         self.status_label = QLabel("")
         layout.addWidget(self.status_label)
 
+        # Progress bar
+        self.progress_bar = QProgressBar()
+        layout.addWidget(self.progress_bar)
+
     def select_files(self):
         files, _ = QFileDialog.getOpenFileNames(
             self,
@@ -121,12 +146,25 @@ class CompressorGUI(QMainWindow):
         quality = self.quality_slider.value()
         if quality == 0:
             quality = 1
-        compressor = ImageCompressor(self.selected_files, quality, self.openfolder_check.isChecked())
-        try:
-            time = compressor.compress()
-            self.status_label.setText(f"Compression completed successfully! ({round(time,2)} seconds)".format(time))
-        except Exception as e:
-            self.status_label.setText(f"Error during compression: {str(e)}")
+        output_format = self.format_combo.currentText().upper()
+        if output_format == 'JPG':
+            output_format = 'JPEG'
+        if output_format not in ['JPEG', 'PNG']:
+            self.status_label.setText("Invalid output format selected!")
+            return
+        compressor = ImageCompressor(self.selected_files, quality, self.openfolder_check.isChecked(), output_format)
+        
+        self.progress_bar.setMaximum(len(self.selected_files))
+        self.progress_bar.setValue(0)
+
+        self.thread = CompressorThread(compressor)
+        self.thread.progress.connect(self.update_progress)
+        self.thread.finished.connect(lambda: self.status_label.setText(f"Compression completed successfully!"))
+        self.thread.error.connect(lambda e: self.status_label.setText(f"Error during compression: {str(e)}"))
+        self.thread.start()
+
+    def update_progress(self, value):
+        self.progress_bar.setValue(value)
 
 def main():
     app = QApplication(sys.argv)
